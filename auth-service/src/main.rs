@@ -1,12 +1,18 @@
-use axum::{routing::{get, post}, Router, Json};
+use axum::{
+    routing::{get, post},
+    Router, Json,
+    http::HeaderMap,
+};
 use serde::{Serialize, Deserialize};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Header, Validation};
+use chrono::Utc;
 
 #[tokio::main]
 async fn main() {
     let app = Router::new()
         .route("/health", get(health))
-        .route("/auth/login", post(login));
+        .route("/auth/login", post(login))
+        .route("/auth/me", get(me));  // ← nouveau
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await
@@ -39,29 +45,74 @@ struct LoginResponse {
     email: String,
 }
 
-// Les données embarquées dans le JWT
 #[derive(Serialize, Deserialize)]
 struct Claims {
-    sub: String,   // subject = qui est l'utilisateur (son email ici)
-    exp: usize,    // expiration (timestamp unix)
+    sub: String,
+    exp: usize,
+}
+
+#[derive(Serialize)]
+struct MeResponse {
+    email: String,
+}
+
+fn get_secret() -> String {
+    std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret".to_string())
 }
 
 async fn login(
     Json(body): Json<LoginRequest>,
 ) -> Json<LoginResponse> {
+    let exp = Utc::now()
+        .checked_add_signed(chrono::Duration::hours(1))
+        .unwrap()
+        .timestamp() as usize;
+
     let claims = Claims {
         sub: body.email.clone(),
-        exp: 9999999999,  // timestamp fixe pour l'instant, on verra la vraie expiration après
+        exp,
     };
 
     let token = encode(
-        &Header::default(),           // algorithme HS256 par défaut
+        &Header::default(),
         &claims,
-        &EncodingKey::from_secret("mon-secret".as_bytes()),
+        &EncodingKey::from_secret(get_secret().as_bytes()),
     ).unwrap();
 
     Json(LoginResponse {
         token,
         email: body.email,
     })
+}
+
+async fn me(
+    headers: HeaderMap,  // ← Axum nous donne accès à tous les headers
+) -> Json<serde_json::Value> {
+    // 1. Lire le header Authorization
+    let auth_header = headers
+        .get("Authorization")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    // 2. Extraire le token (enlever "Bearer ")
+    let token = match auth_header.strip_prefix("Bearer ") {
+        Some(t) => t,
+        None => return Json(serde_json::json!({ "error": "missing token" })),
+    };
+
+    // 3. Valider le token
+    let result = decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(get_secret().as_bytes()),
+        &Validation::default(),
+    );
+
+    match result {
+        Ok(data) => Json(serde_json::json!({
+            "email": data.claims.sub,
+        })),
+        Err(_) => Json(serde_json::json!({
+            "error": "invalid or expired token"
+        })),
+    }
 }
