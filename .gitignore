@@ -1,0 +1,11 @@
+# Rust
+target/
+Cargo.lock   # à garder si c'est une appli finale, à ignorer si c'est une lib
+
+# Variables d'environnement (contient des secrets !)
+.env
+
+# Editors
+.vscode/
+.idea/
+*.rs.bk
