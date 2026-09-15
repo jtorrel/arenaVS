@@ -3,6 +3,7 @@ use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Header, Validation}
 use chrono::Utc;
 
 use crate::models::{Claims, HealthResponse, LoginRequest, LoginResponse, IntrospectRequest, IntrospectResponse};
+use crate::errors::AppError;
 
 pub fn get_secret() -> String {
     std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret".to_string())
@@ -16,7 +17,7 @@ pub async fn health() -> Json<HealthResponse> {
 
 pub async fn login(
     Json(body): Json<LoginRequest>,
-) -> Json<LoginResponse> {
+) -> Result<Json<LoginResponse>, AppError> {  // ← Result au lieu de Json direct
     let exp = Utc::now()
         .checked_add_signed(chrono::Duration::hours(1))
         .unwrap()
@@ -31,41 +32,35 @@ pub async fn login(
         &Header::default(),
         &claims,
         &EncodingKey::from_secret(get_secret().as_bytes()),
-    ).unwrap();
+    ).map_err(|_| AppError::Internal)?;  // ← ? au lieu de unwrap()
 
-    Json(LoginResponse {
+    Ok(Json(LoginResponse {
         token,
         email: body.email,
-    })
+    }))
 }
 
 pub async fn me(
     headers: HeaderMap,
-) -> Json<serde_json::Value> {
+) -> Result<Json<serde_json::Value>, AppError> {
     let auth_header = headers
         .get("Authorization")
         .and_then(|v| v.to_str().ok())
-        .unwrap_or("");
+        .ok_or(AppError::MissingToken)?;  // ← ? au lieu de unwrap_or("")
 
-    let token = match auth_header.strip_prefix("Bearer ") {
-        Some(t) => t,
-        None => return Json(serde_json::json!({ "error": "missing token" })),
-    };
+    let token = auth_header
+        .strip_prefix("Bearer ")
+        .ok_or(AppError::MissingToken)?;
 
-    let result = decode::<Claims>(
+    let data = decode::<Claims>(
         token,
         &DecodingKey::from_secret(get_secret().as_bytes()),
         &Validation::default(),
-    );
+    ).map_err(|_| AppError::InvalidToken)?;
 
-    match result {
-        Ok(data) => Json(serde_json::json!({
-            "email": data.claims.sub,
-        })),
-        Err(_) => Json(serde_json::json!({
-            "error": "invalid or expired token"
-        })),
-    }
+    Ok(Json(serde_json::json!({
+        "email": data.claims.sub,
+    })))
 }
 
 pub async fn introspect(

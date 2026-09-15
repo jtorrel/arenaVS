@@ -1,5 +1,6 @@
 mod models;
 mod handlers;
+mod errors;
 
 use axum::{routing::{get, post}, Router};
 
