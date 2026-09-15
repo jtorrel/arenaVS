@@ -22,3 +22,14 @@ pub struct Claims {
     pub sub: String,
     pub exp: usize,
 }
+
+#[derive(Deserialize)]
+pub struct IntrospectRequest {
+    pub token: String,
+}
+
+#[derive(Serialize)]
+pub struct IntrospectResponse {
+    pub active: bool,
+    pub email: Option<String>,  // Option car si token invalide, pas d'email
+}

@@ -2,7 +2,7 @@ use axum::{Json, http::HeaderMap};
 use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Header, Validation};
 use chrono::Utc;
 
-use crate::models::{Claims, HealthResponse, LoginRequest, LoginResponse};
+use crate::models::{Claims, HealthResponse, LoginRequest, LoginResponse, IntrospectRequest, IntrospectResponse};
 
 pub fn get_secret() -> String {
     std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret".to_string())
@@ -65,5 +65,26 @@ pub async fn me(
         Err(_) => Json(serde_json::json!({
             "error": "invalid or expired token"
         })),
+    }
+}
+
+pub async fn introspect(
+    Json(body): Json<IntrospectRequest>,
+) -> Json<IntrospectResponse> {
+    let result = decode::<Claims>(
+        &body.token,
+        &DecodingKey::from_secret(get_secret().as_bytes()),
+        &Validation::default(),
+    );
+
+    match result {
+        Ok(data) => Json(IntrospectResponse {
+            active: true,
+            email: Some(data.claims.sub),
+        }),
+        Err(_) => Json(IntrospectResponse {
+            active: false,
+            email: None,
+        }),
     }
 }
