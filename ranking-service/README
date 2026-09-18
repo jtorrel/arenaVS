@@ -1,0 +1,53 @@
+Prérequis
+• Rust (edition 2024)
+• sqlx-cli : cargo install sqlx-cli --no-default-features --features postgres
+• Un accès PostgreSQL — en développement : Neon (free tier suffisant)
+Installation
+git clone <repo>
+cd ranking-service
+cp .env.example .env   # puis remplir les valeurs
+cargo build
+Configuration
+Créer un fichier .env à la racine de ranking-service/ (ne jamais commiter ce fichier) :
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+JWT_SECRET=à_remplir
+AUTH_SERVICE_URL=http://localhost:3001
+Un fichier .env.example avec les clés (sans valeurs) doit être commité comme référence.
+Migrations
+Les migrations SQL se trouvent dans migrations/. Les lancer avec sqlx-cli :
+# Depuis le répertoire ranking-service/
+sqlx migrate run
+Pour revenir en arrière :
+sqlx migrate revert
+Les fichiers de migration sont numérotés et s'exécutent dans l'ordre :
+• 0001_create_players.sql
+• 0002_create_matches.sql
+Lancer le service
+cargo run
+Ou en mode watch (rechargement automatique) :
+cargo install cargo-watch   # à faire une seule fois
+cargo watch -x run
+Architecture
+ranking-service/
+├── src/
+│   ├── main.rs          # Démarrage, config, routes
+│   ├── models/          # Player, Match, Score...
+│   │   ├── mod.rs
+│   │   ├── player.rs
+│   │   ├── game.rs
+│   │   └── score.rs
+│   ├── handlers/        # Logique des endpoints HTTP
+│   ├── db/              # Requêtes SQL (sqlx)
+│   │   ├── mod.rs
+│   │   ├── players.rs
+│   │   └── matches.rs
+│   ├── elo/             # Calcul ELO pur (logique métier)
+│   │   └── mod.rs
+│   ├── auth/            # Middleware JWT / introspect
+│   └── errors.rs        # Erreurs custom
+├── migrations/
+│   ├── 0001_create_players.sql
+│   └── 0002_create_matches.sql
+├── .env                 # Ne pas commiter
+├── .env.example         # À commiter
+└── Cargo.toml
