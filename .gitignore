@@ -3,7 +3,7 @@ target/
 Cargo.lock
 
 # Variables d'environnement (contient des secrets !)
-.env
+**/.env
 
 # Editors
 .vscode/
