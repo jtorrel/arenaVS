@@ -1,6 +1,6 @@
 # Rust
 target/
-Cargo.lock   # à garder si c'est une appli finale, à ignorer si c'est une lib
+Cargo.lock
 
 # Variables d'environnement (contient des secrets !)
 .env

@@ -1,8 +1,13 @@
-mod models;
-mod handlers;
-mod errors;
+// --- src/main.rs ---
 
-use axum::{routing::{get, post}, Router};
+mod errors;
+mod handlers;
+mod models;
+
+use axum::{
+    Router,
+    routing::{get, post},
+};
 
 #[tokio::main]
 async fn main() {
@@ -12,9 +17,7 @@ async fn main() {
         .route("/auth/me", get(handlers::me))
         .route("/auth/introspect", post(handlers::introspect));
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
 
     println!("Server started on http://localhost:3000");
     axum::serve(listener, app).await.unwrap();

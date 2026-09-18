@@ -1,4 +1,6 @@
-use serde::{Serialize, Deserialize};
+// --- src/models.rs ---
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
 pub struct HealthResponse {
@@ -31,5 +33,5 @@ pub struct IntrospectRequest {
 #[derive(Serialize)]
 pub struct IntrospectResponse {
     pub active: bool,
-    pub email: Option<String>,  // Option car si token invalide, pas d'email
+    pub email: Option<String>, // Option car si token invalide, pas d'email
 }
