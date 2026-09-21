@@ -41,3 +41,22 @@ pub async fn get_player(pool: &PgPool, player_id: Uuid) -> Result<Player, sqlx::
     .fetch_one(pool)
     .await
 }
+
+/// Met à jour un joueur avec son nouvel ELO.
+///
+/// # Errors
+/// Retourne l'erreur SQL rencontrée lors de la mise à jour.
+pub async fn update_elo(pool: &PgPool, player_id: Uuid, new_elo: i32) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        UPDATE players
+        SET elo = $2, updated_at = NOW()
+        WHERE id = $1
+        "#,
+        player_id,
+        new_elo
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
