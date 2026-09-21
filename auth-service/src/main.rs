@@ -10,6 +10,7 @@ use axum::{
 };
 
 #[tokio::main]
+/// Démarre le serveur HTTP du service d'authentification.
 async fn main() {
     let app = Router::new()
         .route("/health", get(handlers::health))

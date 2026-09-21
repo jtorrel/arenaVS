@@ -7,6 +7,7 @@ pub enum Score {
 }
 
 impl Score {
+    /// Convertit le résultat en valeur numérique utilisée par le calcul ELO.
     pub fn as_score(&self) -> f64 {
         match self {
             Score::Win => 1.0,

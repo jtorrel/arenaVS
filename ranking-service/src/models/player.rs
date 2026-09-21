@@ -15,6 +15,7 @@ pub struct Player {
 }
 
 impl Player {
+    /// Construit un joueur avec l'ELO initial fourni par la configuration.
     pub fn new(id: Uuid, nickname: String, config: &EloConfig) -> Self {
         Self {
             id,
