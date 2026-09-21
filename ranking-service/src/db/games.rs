@@ -1,3 +1,4 @@
+// --- Rankking Service ---
 // --- src/db/games.rs ---
 
 /// Crée une partie
@@ -108,9 +109,10 @@ pub async fn submit_game_report(
     pool: &PgPool,
     report: GameReport,
     game: Game,
-) -> Result<(), sqlx::Error> {
+) -> Result<Game, sqlx::Error> {
     let p1_or_p2 = report.reporter_id == game.player1_id;
-    sqlx::query!(
+    sqlx::query_as!(
+        Game,
         r#"
         UPDATE games
         SET 
@@ -118,12 +120,37 @@ pub async fn submit_game_report(
             p2_report_id = CASE WHEN $3 = false THEN $2 ELSE p2_report_id END,
             updated_at = NOW()
         WHERE id = $1
+        RETURNING id, player1_id, player2_id, p1_report_id, p2_report_id, state, created_at, updated_at
         "#,
         game.id,
         report.id,
         p1_or_p2,
     )
-    .execute(pool)
+    .fetch_one(pool)
     .await?;
     Ok(())
+}
+
+pub async fn get_game_details(pool: &PgPool, game_id: Uuid) -> Result<GameDetails, sqlx::Error> {
+    let game = get_game_by_id(pool, game_id).await?;
+    let p1 = db::players::get_player_by_id(pool, game.player1_id).await?;
+    let p2 = db::players::get_player_by_id(pool, game.player2_id).await?;
+
+    let p1_report = match game.p1_report_id {
+        Some(id) => Some(db::game_reports::get_game_report_by_id(pool, id).await?),
+        None => None,
+    };
+
+    let p2_report = match game.p2_report_id {
+        Some(id) => Some(db::game_reports::get_game_report_by_id(pool, id).await?),
+        None => None,
+    };
+
+    Ok(GameDetails {
+        game_data: game,
+        p1,
+        p2,
+        p1_report,
+        p2_report,
+    })
 }

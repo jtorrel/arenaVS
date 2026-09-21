@@ -1,17 +1,24 @@
+// --- Rankking Service ---
 // --- src/errors.rs ---
 
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+/// Erreurs applicatives retournées par le service.
 pub enum AppError {
+    /// Requête invalide.
     #[error("400 Bad Request: {0}")]
     BadRequest(String),
+    /// Authentification manquante ou invalide.
     #[error("401 Unauthorized: {0}")]
     Unauthorized(String),
+    /// Utilisateur authentifié mais non autorisé.
     #[error("403 Forbidden: {0}")]
     Forbidden(String),
+    /// Ressource demandée introuvable.
     #[error("404 Not Found: {0}")]
     NotFound(String),
+    /// Erreur rencontrée lors d'une opération en base de données.
     #[error("500 Internal Server Error")]
     Database(#[from] sqlx::Error),
 }

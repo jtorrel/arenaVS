@@ -42,7 +42,7 @@ pub async fn login(Json(body): Json<LoginRequest>) -> Result<Json<LoginResponse>
         &claims,
         &EncodingKey::from_secret(get_secret().as_bytes()),
     )
-    .map_err(|_| AppError::Internal)?; // ← ? au lieu de unwrap()
+    .map_err(|_| AppError::Internal)?;
 
     Ok(Json(LoginResponse {
         token,

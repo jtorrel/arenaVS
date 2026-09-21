@@ -1,3 +1,4 @@
+// --- Rankking Service ---
 // --- src/db/game_reports.rs ---
 
 /// Crée un rapport de partie.

@@ -1,9 +1,13 @@
+// --- Rankking Service ---
 // --- src/elo/mod.rs ---
 use crate::models::score::Score;
 
 #[derive(Debug)]
+/// Paramètres utilisés pour les calculs ELO.
 pub struct EloConfig {
+    /// Facteur d'ajustement appliqué après une partie.
     pub k_factor: f64,
+    /// ELO attribué à un nouveau joueur.
     pub initial_elo: f64,
 }
 

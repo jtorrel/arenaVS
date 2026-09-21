@@ -1,8 +1,13 @@
+// --- Rankking Service ---
 // --- src/models/score.rs ---
 #[derive(Debug)]
+/// Résultat d'une partie pour un joueur.
 pub enum Score {
+    /// Victoire du joueur.
     Win,
+    /// Match nul.
     Draw,
+    /// Défaite du joueur.
     Loss,
 }
 

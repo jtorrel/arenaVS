@@ -1,3 +1,4 @@
+// --- Rankking Service ---
 // --- src/auth/mod.rs ---
 
 use axum::{
@@ -14,19 +15,26 @@ struct Claims {
     role: String, // "player" ou "game_server"
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
+/// Rôle attribué à l'utilisateur authentifié.
 pub enum Role {
+    /// Utilisateur correspondant à un joueur.
     Player,
+    /// Serveur autorisé à gérer les parties.
     GameServer,
 }
 
 #[derive(Debug, Clone)]
+/// Utilisateur identifié à partir du token JWT.
 pub struct AuthenticatedUser {
+    /// Identifiant de l'utilisateur authentifié.
     pub user_id: Uuid,
+    /// Rôle de l'utilisateur authentifié.
     pub role: Role,
 }
 
 impl AuthenticatedUser {
+    /// Construit un utilisateur authentifié avec son identifiant et son rôle.
     pub fn new(user_id: Uuid, role: Role) -> Self {
         Self { user_id, role }
     }
